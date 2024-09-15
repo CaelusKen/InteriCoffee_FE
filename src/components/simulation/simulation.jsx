@@ -1,86 +1,98 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { Canvas, useThree, useFrame } from '@react-three/fiber'
+import { useState, useRef, useCallback, useEffect, Suspense } from 'react'
+import { Canvas, useThree, useFrame, useLoader } from '@react-three/fiber'
 import { OrbitControls, Box, Plane, TransformControls, PerspectiveCamera } from '@react-three/drei'
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Slider } from "@/components/ui/slider"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Undo2, Redo2, Trash2, Plus, MoreVertical } from 'lucide-react'
+import { Undo2, Redo2, Trash2, Plus, MoreVertical, Move, RotateCcw } from 'lucide-react'
 import * as THREE from 'three'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 
 const furnitureTypes = [
-  { name: 'Chair', width: 0.6, height: 1, depth: 0.6, color: '#8B4513', image: '/placeholder.svg?height=100&width=100' },
-  { name: 'Table', width: 1.2, height: 0.8, depth: 0.8, color: '#DEB887', image: '/placeholder.svg?height=100&width=100' },
-  { name: 'Sofa', width: 2, height: 0.8, depth: 0.9, color: '#A52A2A', image: '/placeholder.svg?height=100&width=100' },
-  { name: 'Bed', width: 2, height: 0.5, depth: 1.8, color: '#F4A460', image: '/placeholder.svg?height=100&width=100' },
+  { name: 'Chair', width: 0.6, height: 1, depth: 0.6, color: '#8B4513', model: '/models/armchair-019.fbx' },
+  { name: 'Table', width: 1.2, height: 0.8, depth: 0.8, color: '#DEB887', model: '/models/table.obj' },
+  { name: 'Sofa', width: 2, height: 0.8, depth: 0.9, color: '#A52A2A', model: '/models/sofa.fbx' },
+  { name: 'Lamp', width: 0.4, height: 1.5, depth: 0.4, color: '#F4A460', model: '/models/lamp.obj' },
+  { name: 'Shelf', width: 1.5, height: 2, depth: 0.4, color: '#8B4513', model: '/models/shelf.fbx' },
+  { name: 'Cupboard', width: 1.2, height: 1.8, depth: 0.6, color: '#DEB887', model: '/models/cupboard.obj' },
 ]
 
-const Furniture = ({ position, size, color, onSelect, isSelected, onPositionChange, onSizeChange }) => {
-  const mesh = useRef()
+const FurnitureModel = ({ model, ...props }) => {
+  const fileExtension = model.split('.').pop().toLowerCase()
+  let loadedModel
+
+  if (fileExtension === 'fbx') {
+    loadedModel = useLoader(FBXLoader, model)
+  } else if (fileExtension === 'obj') {
+    loadedModel = useLoader(OBJLoader, model)
+  } else {
+    console.error('Unsupported file format:', fileExtension)
+    return null
+  }
+
+  return <primitive object={loadedModel} {...props} />
+}
+
+const Furniture = ({ position, rotation, scale, color, model, onSelect, isSelected, onPositionChange, onRotationChange, transformMode }) => {
+  const group = useRef()
   const [hovered, setHovered] = useState(false)
 
-  const handlePositionChange = useCallback((event) => {
-    if (event.target.object.position) {
+  const handleChange = useCallback((event) => {
+    if (event.target.object.position && transformMode === 'translate') {
       onPositionChange(event.target.object.position)
     }
-  }, [onPositionChange])
-
-  useFrame(() => {
-    if (isSelected && mesh.current) {
-      onPositionChange(mesh.current.position)
+    if (event.target.object.rotation && transformMode === 'rotate') {
+      onRotationChange(event.target.object.rotation)
     }
-  })
+  }, [onPositionChange, onRotationChange, transformMode])
 
   return (
-    <group>
-      <Box
-        ref={mesh}
-        position={position}
-        args={size}
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect()
-        }}
-        onPointerOver={(e) => {
-          e.stopPropagation()
-          setHovered(true)
-        }}
-        onPointerOut={(e) => {
-          e.stopPropagation()
-          setHovered(false)
-        }}
-      >
-        <meshStandardMaterial color={color} />
-      </Box>
+    <group ref={group}>
+      <Suspense fallback={<Box args={scale} position={position} rotation={rotation}>
+        <meshStandardMaterial color={color} opacity={0.5} transparent />
+      </Box>}>
+        <FurnitureModel
+          model={model}
+          position={position}
+          rotation={rotation}
+          scale={scale}
+          onClick={(e) => {
+            e.stopPropagation()
+            onSelect()
+          }}
+          onPointerOver={(e) => {
+            e.stopPropagation()
+            setHovered(true)
+          }}
+          onPointerOut={(e) => {
+            e.stopPropagation()
+            setHovered(false)
+          }}
+        >
+          {hovered && (
+            <meshStandardMaterial color="#ff0000" transparent opacity={0.5} />
+          )}
+        </FurnitureModel>
+      </Suspense>
       {isSelected && (
-        <TransformControls object={mesh} mode="translate" onObjectChange={handlePositionChange} />
+        <TransformControls object={group} mode={transformMode} onObjectChange={handleChange} />
       )}
     </group>
   )
 }
 
-const Room = ({ furniture, onSelectFurniture, selectedFurniture, onUpdateFurniture, onSizeChange }) => {
+const Room = ({ furniture, onSelectFurniture, selectedFurniture, onUpdateFurniture, transformMode }) => {
   const handleCanvasClick = (event) => {
     if (event.object.name !== 'dragPlane') {
       onSelectFurniture(null)
     }
   }
-
-  const handleWheel = (event) => {
-    if (event.ctrlKey && selectedFurniture !== null) {
-      event.preventDefault()
-      const delta = event.deltaY * -0.01
-      onSizeChange(selectedFurniture, delta)
-    }
-  }
-
-  useEffect(() => {
-    window.addEventListener('wheel', handleWheel, { passive: false })
-    return () => window.removeEventListener('wheel', handleWheel)
-  }, [selectedFurniture, onSizeChange])
 
   return (
     <group onClick={handleCanvasClick}>
@@ -102,11 +114,16 @@ const Room = ({ furniture, onSelectFurniture, selectedFurniture, onUpdateFurnitu
       {furniture.map((item, index) => (
         <Furniture 
           key={index} 
-          {...item} 
+          position={item.position}
+          rotation={item.rotation}
+          scale={[item.width, item.height, item.depth]}
+          color={item.color}
+          model={item.model}
           onSelect={() => onSelectFurniture(index)}
           isSelected={selectedFurniture === index}
           onPositionChange={(newPosition) => onUpdateFurniture(index, { position: [newPosition.x, newPosition.y, newPosition.z] })}
-          onSizeChange={(delta) => onSizeChange(index, delta)}
+          onRotationChange={(newRotation) => onUpdateFurniture(index, { rotation: [newRotation.x, newRotation.y, newRotation.z] })}
+          transformMode={transformMode}
         />
       ))}
     </group>
@@ -138,43 +155,27 @@ const DragPlane = ({ onDrop }) => {
   )
 }
 
-const DraggableInput = ({ label, value, onChange }) => {
-  const [isDragging, setIsDragging] = useState(false)
-  const [startX, setStartX] = useState(0)
-  const [startValue, setStartValue] = useState(0)
-
-  const handleMouseDown = (e) => {
-    setIsDragging(true)
-    setStartX(e.clientX)
-    setStartValue(value)
-  }
-
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      const diff = e.clientX - startX
-      const newValue = Math.max(0, startValue + diff * 0.01)
-      onChange(newValue)
-    }
-  }
-
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
-
+const InspectorInput = ({ label, value, onChange, min = 0, max = 10, step = 0.1 }) => {
   return (
-    <div>
-      <Label htmlFor={label}>{label}</Label>
-      <Input 
-        id={label} 
-        type="number" 
-        value={value.toFixed(2)}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        step="0.1"
-      />
+    <div className="mb-4">
+      <Label className="text-sm font-medium">{label}</Label>
+      <div className="flex items-center mt-1">
+        <Input
+          type="number"
+          value={value.toFixed(2)}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          className="w-20 mr-2"
+          step={step}
+        />
+        <Slider
+          value={[value]}
+          min={min}
+          max={max}
+          step={step}
+          onValueChange={([newValue]) => onChange(newValue)}
+          className="flex-1"
+        />
+      </div>
     </div>
   )
 }
@@ -187,31 +188,37 @@ export default function RoomPlanner() {
   const [dragPosition, setDragPosition] = useState(null)
   const [history, setHistory] = useState([[]])
   const [historyIndex, setHistoryIndex] = useState(0)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      addToHistory(furniture)
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [furniture])
+  const [transformMode, setTransformMode] = useState('translate')
 
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'Delete' && selectedFurniture !== null) {
         handleDeleteFurniture(selectedFurniture)
       }
+      if (event.ctrlKey && event.key === 'z') {
+        undo()
+      }
+      if (event.ctrlKey && event.key === 'y') {
+        redo()
+      }
+      if (event.key === 'r') {
+        toggleTransformMode()
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedFurniture])
+  }, [selectedFurniture, historyIndex, transformMode])
+
+  const toggleTransformMode = () => {
+    setTransformMode(prevMode => prevMode === 'translate' ? 'rotate' : 'translate')
+  }
 
   const handleDrop = useCallback((position) => {
-    if (isDragging && selectedType) {
+    if (selectedType) {
       handleAddFurniture(position)
     }
-  }, [isDragging, selectedType])
+  }, [selectedType])
 
   const handleAddFurniture = (position = { x: 0, y: 0, z: 0 }) => {
     if (selectedType) {
@@ -227,6 +234,7 @@ export default function RoomPlanner() {
         ...selectedType,
         name: newName,
         position: [position.x, selectedType.height / 2 + position.y, position.z],
+        rotation: [0, 0, 0],
       }
       const newFurnitureList = [...furniture, newFurniture]
       setFurniture(newFurnitureList)
@@ -244,25 +252,7 @@ export default function RoomPlanner() {
   const handleUpdateFurniture = (index, updates) => {
     const updatedFurniture = furniture.map((item, i) => i === index ? { ...item, ...updates } : item)
     setFurniture(updatedFurniture)
-  }
-
-  const handleSizeChange = (index, delta) => {
-    const updatedFurniture = furniture.map((item, i) => {
-      if (i === index) {
-        const newWidth = Math.max(0.1, item.width + delta)
-        const newHeight = Math.max(0.1, item.height + delta)
-        const newDepth = Math.max(0.1, item.depth + delta)
-        return {
-          ...item,
-          width: newWidth,
-          height: newHeight,
-          depth: newDepth,
-          size: [newWidth, newHeight, newDepth]
-        }
-      }
-      return item
-    })
-    setFurniture(updatedFurniture)
+    addToHistory(updatedFurniture)
   }
 
   const addToHistory = (newState) => {
@@ -306,21 +296,24 @@ export default function RoomPlanner() {
           {furnitureTypes.map((type) => (
             <Button 
               key={type.name}
-              onClick={() => setSelectedType(type)}
-              variant={selectedType === type ? "secondary" : "outline"}
-              onPointerDown={() => setIsDragging(true)}
-              onPointerUp={() => {
-                if (!dragPosition) {
-                  handleAddFurniture()
-                }
-                setIsDragging(false)
+              onClick={() => {
+                setSelectedType(type)
+                handleAddFurniture({ x: 0, y: 0, z: 0 })
               }}
+              variant="outline"
             >
               <Plus className="mr-2 h-4 w-4" /> {type.name}
             </Button>
           ))}
         </div>
         <div className="flex space-x-2">
+          <Button 
+            onClick={toggleTransformMode} 
+            variant={transformMode === 'translate' ? "secondary" : "outline"}
+            title="Toggle Transform Mode (Shortcut: R)"
+          >
+            {transformMode === 'translate' ? <Move className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
+          </Button>
           <Button onClick={undo} disabled={historyIndex <= 0}><Undo2 className="h-4 w-4" /></Button>
           <Button onClick={redo} disabled={historyIndex >= history.length - 1}><Redo2 className="h-4 w-4" /></Button>
           <AlertDialog>
@@ -377,55 +370,102 @@ export default function RoomPlanner() {
               onSelectFurniture={handleSelectFurniture}
               selectedFurniture={selectedFurniture}
               onUpdateFurniture={handleUpdateFurniture}
-              onSizeChange={handleSizeChange}
+              transformMode={transformMode}
             />
             <DragPlane onDrop={handleDrop} />
             <OrbitControls makeDefault />
           </Canvas>
         </div>
         <div className="w-1/4 p-4 bg-gray-100 overflow-y-auto">
-          <h2 className="text-2xl font-bold mb-4">Properties</h2>
-          {selectedFurniture !== null && (
+          <h2 className="text-2xl font-bold mb-4">Inspector</h2>
+          {selectedFurniture !== null && furniture[selectedFurniture] && (
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="color">Color</Label>
-                <Input 
-                  id="color" 
-                  type="color" 
-                  value={furniture[selectedFurniture].color}
-                  onChange={(e) => handleUpdateFurniture(selectedFurniture, { color: e.target.value })}
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                <h3 className="text-lg font-semibold mb-2">{furniture[selectedFurniture].name}</h3>
+                <div className="mb-4">
+                  <Label htmlFor="color" className="text-sm font-medium">Color</Label>
+                  <div className="flex items-center mt-1">
+                    <Input 
+                      id="color" 
+                      type="color" 
+                      value={furniture[selectedFurniture].color}
+                      onChange={(e) => handleUpdateFurniture(selectedFurniture, { color: e.target.value })}
+                      className="w-10 h-10 p-1 mr-2"
+                    />
+                    <Input 
+                      type="text" 
+                      value={furniture[selectedFurniture].color}
+                      onChange={(e) => handleUpdateFurniture(selectedFurniture, { color: e.target.value })}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <h4 className="text-sm font-semibold mb-2">Transform</h4>
+                <InspectorInput 
+                  label="Position X"
+                  value={furniture[selectedFurniture].position[0]}
+                  onChange={(value) => handleUpdateFurniture(selectedFurniture, { position: [value, furniture[selectedFurniture].position[1], furniture[selectedFurniture].position[2]] })}
+                  min={-5}
+                  max={5}
+                />
+                <InspectorInput 
+                  label="Position Y"
+                  value={furniture[selectedFurniture].position[1]}
+                  onChange={(value) => handleUpdateFurniture(selectedFurniture, { position: [furniture[selectedFurniture].position[0], value, furniture[selectedFurniture].position[2]] })}
+                  min={0}
+                  max={5}
+                />
+                <InspectorInput 
+                  label="Position Z"
+                  value={furniture[selectedFurniture].position[2]}
+                  onChange={(value) => handleUpdateFurniture(selectedFurniture, { position: [furniture[selectedFurniture].position[0], furniture[selectedFurniture].position[1], value] })}
+                  min={-5}
+                  max={5}
+                />
+                <InspectorInput 
+                  label="Rotation X"
+                  value={furniture[selectedFurniture].rotation[0]}
+                  onChange={(value) => handleUpdateFurniture(selectedFurniture, { rotation: [value, furniture[selectedFurniture].rotation[1], furniture[selectedFurniture].rotation[2]] })}
+                  min={0}
+                  max={Math.PI * 2}
+                  step={0.01}
+                />
+                <InspectorInput 
+                  label="Rotation Y"
+                  value={furniture[selectedFurniture].rotation[1]}
+                  onChange={(value) => handleUpdateFurniture(selectedFurniture, { rotation: [furniture[selectedFurniture].rotation[0], value, furniture[selectedFurniture].rotation[2]] })}
+                  min={0}
+                  max={Math.PI * 2}
+                  step={0.01}
+                />
+                <InspectorInput 
+                  label="Rotation Z"
+                  value={furniture[selectedFurniture].rotation[2]}
+                  onChange={(value) => handleUpdateFurniture(selectedFurniture, { rotation: [furniture[selectedFurniture].rotation[0], furniture[selectedFurniture].rotation[1], value] })}
+                  min={0}
+                  max={Math.PI * 2}
+                  step={0.01}
+                />
+                <h4 className="text-sm font-semibold mb-2 mt-4">Scale</h4>
+                <InspectorInput 
+                  label="Width"
+                  value={furniture[selectedFurniture].width}
+                  onChange={(value) => handleUpdateFurniture(selectedFurniture, { width: value })}
+                  max={5}
+                />
+                <InspectorInput 
+                  label="Height"
+                  value={furniture[selectedFurniture].height}
+                  onChange={(value) => handleUpdateFurniture(selectedFurniture, { height: value })}
+                  max={5}
+                />
+                <InspectorInput 
+                  label="Depth"
+                  value={furniture[selectedFurniture].depth}
+                  onChange={(value) => handleUpdateFurniture(selectedFurniture, { depth: value })}
+                  max={5}
                 />
               </div>
-              <DraggableInput 
-                label="Width"
-                value={furniture[selectedFurniture].width}
-                onChange={(value) => handleUpdateFurniture(selectedFurniture, { width: value, size: [value, furniture[selectedFurniture].height, furniture[selectedFurniture].depth] })}
-              />
-              <DraggableInput 
-                label="Height"
-                value={furniture[selectedFurniture].height}
-                onChange={(value) => handleUpdateFurniture(selectedFurniture, { height: value, size: [furniture[selectedFurniture].width, value, furniture[selectedFurniture].depth] })}
-              />
-              <DraggableInput 
-                label="Depth"
-                value={furniture[selectedFurniture].depth}
-                onChange={(value) => handleUpdateFurniture(selectedFurniture, { depth: value, size: [furniture[selectedFurniture].width, furniture[selectedFurniture].height, value] })}
-              />
-              <DraggableInput 
-                label="Position X"
-                value={furniture[selectedFurniture].position[0]}
-                onChange={(value) => handleUpdateFurniture(selectedFurniture, { position: [value, furniture[selectedFurniture].position[1], furniture[selectedFurniture].position[2]] })}
-              />
-              <DraggableInput 
-                label="Position Y"
-                value={furniture[selectedFurniture].position[1]}
-                onChange={(value) => handleUpdateFurniture(selectedFurniture, { position: [furniture[selectedFurniture].position[0], value, furniture[selectedFurniture].position[2]] })}
-              />
-              <DraggableInput 
-                label="Position Z"
-                value={furniture[selectedFurniture].position[2]}
-                onChange={(value) => handleUpdateFurniture(selectedFurniture, { position: [furniture[selectedFurniture].position[0], furniture[selectedFurniture].position[1], value] })}
-              />
             </div>
           )}
         </div>
