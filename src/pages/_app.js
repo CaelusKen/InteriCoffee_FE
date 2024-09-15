@@ -10,12 +10,12 @@ export default function App({ Component, pageProps }) {
   const screenName = "Home";
   return (
     <div className="flex flex-col bg-black mx-auto">
-      <HeaderBar />
-      <Slug screenName={screenName} />
+      {/* <HeaderBar />
+      <Slug screenName={screenName} /> */}
       <main>
         <Component {...pageProps} />
       </main>
-      <FooterBar />
+      {/* <FooterBar /> */}
     </div>
   );
 }

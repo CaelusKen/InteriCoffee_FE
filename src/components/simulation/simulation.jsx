@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect, Suspense } from 'react'
-import { Canvas, useThree, useFrame, useLoader } from '@react-three/fiber'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls, Box, Plane, TransformControls, PerspectiveCamera } from '@react-three/drei'
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -11,36 +11,18 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Undo2, Redo2, Trash2, Plus, MoreVertical, Move, RotateCcw } from 'lucide-react'
 import * as THREE from 'three'
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 
 const furnitureTypes = [
-  { name: 'Chair', width: 0.6, height: 1, depth: 0.6, color: '#8B4513', model: '/models/armchair-019.fbx' },
-  { name: 'Table', width: 1.2, height: 0.8, depth: 0.8, color: '#DEB887', model: '/models/table.obj' },
-  { name: 'Sofa', width: 2, height: 0.8, depth: 0.9, color: '#A52A2A', model: '/models/sofa.fbx' },
-  { name: 'Lamp', width: 0.4, height: 1.5, depth: 0.4, color: '#F4A460', model: '/models/lamp.obj' },
-  { name: 'Shelf', width: 1.5, height: 2, depth: 0.4, color: '#8B4513', model: '/models/shelf.fbx' },
-  { name: 'Cupboard', width: 1.2, height: 1.8, depth: 0.6, color: '#DEB887', model: '/models/cupboard.obj' },
+  { name: 'Chair', width: 0.6, height: 1, depth: 0.6, color: '#8B4513' },
+  { name: 'Table', width: 1.2, height: 0.8, depth: 0.8, color: '#DEB887' },
+  { name: 'Sofa', width: 2, height: 0.8, depth: 0.9, color: '#A52A2A' },
+  { name: 'Lamp', width: 0.4, height: 1.5, depth: 0.4, color: '#F4A460' },
+  { name: 'Shelf', width: 1.5, height: 2, depth: 0.4, color: '#8B4513' },
+  { name: 'Cupboard', width: 1.2, height: 1.8, depth: 0.6, color: '#DEB887' },
 ]
 
-const FurnitureModel = ({ model, ...props }) => {
-  const fileExtension = model.split('.').pop().toLowerCase()
-  let loadedModel
-
-  if (fileExtension === 'fbx') {
-    loadedModel = useLoader(FBXLoader, model)
-  } else if (fileExtension === 'obj') {
-    loadedModel = useLoader(OBJLoader, model)
-  } else {
-    console.error('Unsupported file format:', fileExtension)
-    return null
-  }
-
-  return <primitive object={loadedModel} {...props} />
-}
-
-const Furniture = ({ position, rotation, scale, color, model, onSelect, isSelected, onPositionChange, onRotationChange, transformMode }) => {
-  const group = useRef()
+const Furniture = ({ position, rotation, scale, color, onSelect, isSelected, onPositionChange, onRotationChange, transformMode }) => {
+  const mesh = useRef()
   const [hovered, setHovered] = useState(false)
 
   const handleChange = useCallback((event) => {
@@ -53,35 +35,29 @@ const Furniture = ({ position, rotation, scale, color, model, onSelect, isSelect
   }, [onPositionChange, onRotationChange, transformMode])
 
   return (
-    <group ref={group}>
-      <Suspense fallback={<Box args={scale} position={position} rotation={rotation}>
-        <meshStandardMaterial color={color} opacity={0.5} transparent />
-      </Box>}>
-        <FurnitureModel
-          model={model}
-          position={position}
-          rotation={rotation}
-          scale={scale}
-          onClick={(e) => {
-            e.stopPropagation()
-            onSelect()
-          }}
-          onPointerOver={(e) => {
-            e.stopPropagation()
-            setHovered(true)
-          }}
-          onPointerOut={(e) => {
-            e.stopPropagation()
-            setHovered(false)
-          }}
-        >
-          {hovered && (
-            <meshStandardMaterial color="#ff0000" transparent opacity={0.5} />
-          )}
-        </FurnitureModel>
-      </Suspense>
+    <group>
+      <Box
+        ref={mesh}
+        position={position}
+        rotation={rotation}
+        scale={scale}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect()
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation()
+          setHovered(true)
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation()
+          setHovered(false)
+        }}
+      >
+        <meshStandardMaterial color={hovered ? '#ff0000' : color} />
+      </Box>
       {isSelected && (
-        <TransformControls object={group} mode={transformMode} onObjectChange={handleChange} />
+        <TransformControls object={mesh} mode={transformMode} onObjectChange={handleChange} />
       )}
     </group>
   )
@@ -118,7 +94,6 @@ const Room = ({ furniture, onSelectFurniture, selectedFurniture, onUpdateFurnitu
           rotation={item.rotation}
           scale={[item.width, item.height, item.depth]}
           color={item.color}
-          model={item.model}
           onSelect={() => onSelectFurniture(index)}
           isSelected={selectedFurniture === index}
           onPositionChange={(newPosition) => onUpdateFurniture(index, { position: [newPosition.x, newPosition.y, newPosition.z] })}
