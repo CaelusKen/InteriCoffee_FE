@@ -1,75 +1,121 @@
 import Image from "next/image";
-import React, { useState } from "react";
+import React from "react";
 import { products } from "@/utils/product-card-dummy";
-import RatingSection from "@/components/rating/rating-section";
+import { Button } from "../ui/button";
+import { calculatePercentSale } from "@/utils/price-percentage";
+import { Badge } from "../ui/badge";
 
-export const ProductCard = ({ imageUrl, name, price, rating, isSale }) => {
+export const ProductCard = ({
+  imageUrl,
+  name,
+  price,
+  merchant,
+  tags,
+  isSale,
+  salePrice,
+}) => {
   return (
-    <div className="flex flex-col rounded-lg overflow-hidden text-center p-2">
-      <Image
-        src={imageUrl}
-        alt={name}
-        width={260}
-        height={450}
-        className="p-4"
-      />
+    <div className="flex flex-col rounded-lg overflow-hidden p-2">
+      <div className="relative">
+        <Image
+          src={imageUrl}
+          alt={name}
+          width={380}
+          height={380}
+          className="py-4"
+        />
+        {isSale ? (
+          <Badge className="absolute top-3 right-0 m-2 text-white font-outfit bg-[#CE0000]">
+            -{calculatePercentSale(price, salePrice)}%
+          </Badge>
+        ) : (
+          <></>
+        )}
+      </div>
       <div className="flex flex-col gap-3">
-        <p className="text-white font-outfit font-bold">{name}</p>
-        <RatingSection rating={rating} />
-        <p className="text-white font-outfit font-normal">{price}</p>
+        <div className="flex flex-row justify-between items-center">
+          <p className="text-white text-3xl font-outfit font-bold">{name}</p>
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag, index) => (
+              <Badge
+                key={index}
+                className="bg-[#B88D6F] text-white font-outfit text-[0.5rem] px-2 py-0.5 h-4 rounded-none"
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-row justify-between items-center h-6">
+          <p className="text-white text-lg font-outfit font-normal">
+            {merchant}
+          </p>
+          <div className="flex flex-row gap-3 text-white text-lg font-outfit">
+            {isSale ? (
+              <>
+                ${salePrice}
+                <div className="line-through text-xs">${price}</div>
+              </>
+            ) : (
+              <>
+                ${salePrice}
+                <Badge className="bg-[#EDA145] text-white font-outfit text-[0.5rem] px-2 py-0.5 h-4 rounded">
+                  Recently Added
+                </Badge>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-const ProductCardList = () => {
+const ProductCardList = ({ isSale }) => {
+  const filteredProducts = isSale
+    ? products.filter((product) => product.isSale)
+    : products.filter((product) => !product.isSale);
   return (
-    <>
-      <div className="flex flex-col items-start">
-        <h1 className="font-outfit font-black text-white text-4xl pt-[7.5rem] pb-5">
-          Recent Products
-        </h1>
-        <p className="text-white font-outfit pb-2">
-          Checkout our latest products
-        </p>
-      </div>
+    <div className="container">
+      {isSale ? (
+        <div className="flex flex-col items-start">
+          <h1 className="font-outfit font-black text-white text-4xl pt-[7.5rem] pb-5">
+            SPECIAL SALES
+          </h1>
+          <p className="text-white font-outfit pb-2">
+            Flash sales incoming, grab them before it expires!
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col items-start">
+          <h1 className="font-outfit font-black text-white text-4xl pt-[7.5rem] pb-5">
+            LATEST ENTRIES FROM MERCHANTS
+          </h1>
+          <p className="text-white font-outfit pb-2">
+            Latest products from our merchants, go check them out!
+          </p>
+        </div>
+      )}
       <div className="flex flex-wrap justify-evenly">
-        {products.slice(0, 6).map((product, index) => (
+        {filteredProducts.slice(0, 3).map((product, index) => (
           <ProductCard
             key={index}
             imageUrl={product.imageUrl}
             name={product.name}
             price={product.price}
-            rating={product.rating}
+            salePrice={product.salePrice}
+            merchant={product.merchant}
+            tags={product.tags}
             isSale={product.isSale}
           />
         ))}
       </div>
-      {products.some(product => product.isSale) && products.length > 0 && (
-    <>
-      <div className="flex flex-col items-start">
-        <h1 className="font-outfit font-black text-white text-4xl pt-[7.5rem] pb-5">
-          On Sale
-        </h1>
-        <p className="text-white font-outfit pb-2">
-          Special Discount on these items, grab them quickly!
-        </p>
+      <div className="flex justify-center py-6">
+        <Button className="bg-[#B88D6F] text-white font-outfit px-10 py-2 rounded-none">
+          VIEW ALL PRODUCTS
+        </Button>
       </div>
-      <div className="flex flex-wrap justify-evenly">
-        {products.filter(product => product.isSale).slice(0, 6).map((product, index) => (
-          <ProductCard
-            key={index}
-            imageUrl={product.imageUrl}
-            name={product.name}
-            price={product.price}
-            rating={product.rating}
-            isSale={product.isSale}
-          />
-        ))}
-      </div>
-    </>
-  )}
-    </>
+    </div>
   );
 };
 

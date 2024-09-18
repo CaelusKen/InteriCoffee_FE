@@ -12,7 +12,7 @@ export default function App({ Component, pageProps }) {
     <div className="flex flex-col bg-black mx-auto">
       {/* <HeaderBar />
       <Slug screenName={screenName} /> */}
-      <main>
+      <main className="min-h-screen">
         <Component {...pageProps} />
       </main>
       {/* <FooterBar /> */}

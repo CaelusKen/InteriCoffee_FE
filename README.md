@@ -1,7 +1,7 @@
-# Login Feature
 
-User will be able to login using either their email or phone number, along with password. In addittion, user can login with Google as an alternative
+# InteriCoffee Project Overview
 
-## Update Log
+## The concept
+The project is inspired from the need of Interior Design for coffee shop owners and startups to start enhancing their Interior Designs and apply them to their shop
 
-02/09/2024: Finish the Traditional Login UI (for both Email and Phone Number)
+## Dev Logs (TbA)

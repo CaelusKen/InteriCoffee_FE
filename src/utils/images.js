@@ -16,6 +16,8 @@ import halfRatedStarIcon from "../../public/images/half_rated_star_icon.svg";
 import filterBarIcon from "../../public/images/filter_bar_icon.svg";
 import collapsiblePlusIcon from "../../public/images/collapsible_plus_icon.svg";
 import collapsibleMinusIcon from "../../public/images/collapsible_minus_icon.svg";
+import homepageBanner from "../../public/images/homepage_banner.svg";
+import merchantImage from "../../public/images/merchant_image.svg";
 
 export const Images = {
     headerLogo,
@@ -36,4 +38,6 @@ export const Images = {
     filterBarIcon,
     collapsiblePlusIcon,
     collapsibleMinusIcon,
+    homepageBanner,
+    merchantImage,
 }
