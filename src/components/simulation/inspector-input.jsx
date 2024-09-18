@@ -10,13 +10,14 @@ export const InspectorInput = ({
     max = 10,
     step = 0.1,
   }) => {
+    const numericValue = typeof value === 'number' ? value : min;
     return (
       <div className="mb-4">
         <Label className="text-sm font-medium">{label}</Label>
         <div className="flex items-center mt-1">
           <Input
             type="number"
-            value={value.toFixed(2)}
+            value={numericValue.toFixed(2)}
             onChange={(e) => onChange(parseFloat(e.target.value))}
             className="w-20 mr-2"
             step={step}
