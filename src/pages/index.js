@@ -16,7 +16,7 @@ const Homepage = () => {
       <HomepageBanner />
       <ProductCardList />
       <HomepageBanner />
-      <ProductCardList isSale={true}/>
+      <ProductCardList isSale={true} />
       <HomepageBanner />
       <MerchantCardList />
     </>

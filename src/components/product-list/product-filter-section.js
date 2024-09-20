@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -8,8 +8,14 @@ import {
 import { Images } from "@/utils/images";
 import Image from "next/image";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "../ui/button";
 
 const ProductFilterSection = () => {
+  const [sliderValue, setSliderValue] = useState(0);
+
+  const handleSliderChange = (event) => {
+    setSliderValue(event.target.value);
+  };
   return (
     <>
       <Accordion type="single" collapsible className="w-1/5">
@@ -63,9 +69,11 @@ const ProductFilterSection = () => {
         </AccordionItem>
         <AccordionItem value="item-6">
           <AccordionTrigger>Price</AccordionTrigger>
-          <AccordionContent>
-            <Slider />
-          </AccordionContent>
+          <Slider className="py-4"/>
+          <div className="flex flex-row justify-between items-center">
+            <div className="font-outfit text-white">0 - {sliderValue}</div>
+            <Button className="font-outfit text-white bg-[#B88D6F]">Apply</Button>
+          </div>
         </AccordionItem>
       </Accordion>
     </>
