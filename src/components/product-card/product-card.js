@@ -4,8 +4,10 @@ import { products } from "@/utils/product-card-dummy";
 import { Button } from "../ui/button";
 import { calculatePercentSale } from "@/utils/price-percentage";
 import { Badge } from "../ui/badge";
+import { useRouter } from "next/router";
 
 export const ProductCard = ({
+  id,
   imageUrl,
   name,
   price,
@@ -14,8 +16,18 @@ export const ProductCard = ({
   isSale,
   salePrice,
 }) => {
+  const router = useRouter();
+
+  // Function to handle navigation to the Product Detail page with query parameters
+  const handleNavigation = () => {
+    router.push(`/products/${id}?name=${encodeURIComponent(name)}`);
+  };
+
   return (
-    <div className="flex flex-col rounded-lg overflow-hidden p-2">
+    <div
+      className="flex flex-col rounded-lg overflow-hidden cursor-pointer"
+      onClick={handleNavigation}
+    >
       <div className="relative">
         <Image
           src={imageUrl}
@@ -24,17 +36,15 @@ export const ProductCard = ({
           height={380}
           className="py-4"
         />
-        {isSale ? (
+        {isSale && (
           <Badge className="absolute top-3 right-0 m-2 text-white font-outfit bg-[#CE0000]">
             -{calculatePercentSale(price, salePrice)}%
           </Badge>
-        ) : (
-          <></>
         )}
       </div>
       <div className="flex flex-col gap-3">
         <div className="flex flex-row justify-between items-center">
-          <p className="text-white text-3xl font-outfit font-bold">{name}</p>
+          <p className="text-white text-2xl font-outfit font-bold">{name}</p>
           <div className="flex flex-wrap gap-2">
             {tags.map((tag, index) => (
               <Badge
@@ -47,7 +57,7 @@ export const ProductCard = ({
           </div>
         </div>
         <div className="flex flex-row justify-between items-center h-6">
-          <p className="text-white text-lg font-outfit font-normal">
+          <p className="text-white text-base font-outfit font-normal">
             {merchant}
           </p>
           <div className="flex flex-row gap-3 text-white text-lg font-outfit">
@@ -99,6 +109,7 @@ const ProductCardList = ({ isSale }) => {
       <div className="flex flex-wrap justify-evenly">
         {filteredProducts.slice(0, 3).map((product, index) => (
           <ProductCard
+            id={product.id} // Pass the product ID to the ProductCard component
             key={index}
             imageUrl={product.imageUrl}
             name={product.name}

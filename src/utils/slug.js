@@ -11,8 +11,12 @@ const transformScreenName = (pathname) => {
   let pathAccumulator = '';
   segments.forEach(segment => {
     pathAccumulator += `/${segment}`;
+    let name = segment.charAt(0).toUpperCase() + segment.slice(1);
+    if (name === 'Products') {
+      name = 'Furniture Store';
+    }
     breadcrumb.push({
-      name: segment.charAt(0).toUpperCase() + segment.slice(1),
+      name,
       path: pathAccumulator
     });
   });
@@ -20,29 +24,29 @@ const transformScreenName = (pathname) => {
 };
 
 const Slug = () => {
-    const router = useRouter();
-    const breadcrumb = transformScreenName(router.pathname);
-  
-    if (breadcrumb.length === 1) {
-      return null;
-    }
-  
-    return (
-      <div className="slug-ui text-white p-2">
-        {breadcrumb.map((crumb, index) => (
-          <span key={crumb.path}>
-            <Link href={crumb.path} legacyBehavior>
-              <a className='hover:underline'>{crumb.name}</a>
-            </Link>
-            {index < breadcrumb.length - 1 && ' > '}
-          </span>
-        ))}
-      </div>
-    );
-  };
-  
-  Slug.propTypes = {
-    screenName: PropTypes.string.isRequired,
-  };
-  
-  export default Slug;
+  const router = useRouter();
+  const breadcrumb = transformScreenName(router.pathname);
+
+  if (breadcrumb.length === 1) {
+    return null;
+  }
+
+  return (
+    <div className="slug-ui text-white px-8">
+      {breadcrumb.map((crumb, index) => (
+        <span key={crumb.path}>
+          <Link href={crumb.path} legacyBehavior>
+            <a className='hover:underline'>{crumb.name}</a>
+          </Link>
+          {index < breadcrumb.length - 1 && ' > '}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+Slug.propTypes = {
+  screenName: PropTypes.string.isRequired,
+};
+
+export default Slug;

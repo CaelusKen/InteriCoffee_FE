@@ -23,7 +23,7 @@ const Background = () => {
             </h1>
             <div className="relative w-1/3 mt-2">
               <Input
-                placeholder="Search for products"
+                placeholder="Search here..."
                 className="w-full pr-10 border-2 border-white rounded-md bg-transparent"
               />
               <Image
@@ -53,7 +53,7 @@ const Background = () => {
 
             <div className="relative w-1/3 mt-2">
               <Input
-                placeholder="Search for products"
+                placeholder="Search here..."
                 className="w-full pr-10 border-2 border-white rounded-md"
               />
               <Image
