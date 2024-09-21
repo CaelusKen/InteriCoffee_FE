@@ -5,12 +5,12 @@ import ProductDetail from "@/components/product-card/product-detail"; // Import 
 
 const ProductsPage = () => {
   const router = useRouter();
-  const { id, name } = router.query; 
+  const { id, name, merchant } = router.query; 
 
   return (
     <div>
       {id ? (
-        <ProductDetail id={id} name={name} /> // Pass the product ID to ProductDetail
+        <ProductDetail id={id} name={name} merchant={merchant} /> // Pass the product ID to ProductDetail
       ) : (
         <ProductListItem /> // Render the ProductListItem component
       )}

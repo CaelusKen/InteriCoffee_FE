@@ -11,6 +11,8 @@ export const products = [
     merchantImage: Images.merchantImage,
     tags: ["Chair", "Modern", "Minimalist"],
     isSale: true,
+    rating: 4,
+    imageDetail: [Images.productCard, Images.productCard, Images.productCard, Images.productHomePage2],
   },
   {
     id: 2,
@@ -22,6 +24,8 @@ export const products = [
     merchantImage: Images.merchantImage,
     tags: ["Chair", "Modern", "Minimalist"],
     isSale: false,
+    rating: 5,
+    imageDetail: [Images.productCard, Images.productCard, Images.productCard],
   },
   {
     id: 3,
@@ -33,6 +37,8 @@ export const products = [
     merchantImage: Images.merchantImage,
     tags: ["Chair", "Modern", "Minimalist"],
     isSale: true,
+    rating: 3,
+    imageDetail: [Images.productCard, Images.productCard, Images.productCard],
   },
   {
     id: 4,
@@ -44,6 +50,8 @@ export const products = [
     merchantImage: Images.merchantImage,
     tags: ["Chair", "Modern", "Minimalist"],
     isSale: true,
+    rating: 2,
+    imageDetail: [Images.productCard, Images.productCard, Images.productCard],
   },
   {
     id: 5,
@@ -55,6 +63,8 @@ export const products = [
     merchantImage: Images.merchantImage,
     tags: ["Chair", "Modern", "Minimalist"],
     isSale: false,
+    rating: 1,
+    imageDetail: [Images.productCard, Images.productCard, Images.productCard],
   },
   {
     id: 6,
@@ -66,6 +76,8 @@ export const products = [
     merchantImage: Images.merchantImage,
     tags: ["Chair", "Modern", "Minimalist"],
     isSale: true,
+    rating: 4,
+    imageDetail: [Images.productCard, Images.productCard, Images.productCard],
   },
   {
     id: 7,
@@ -77,6 +89,8 @@ export const products = [
     merchantImage: Images.merchantImage,
     tags: ["Chair", "Modern", "Minimalist"],
     isSale: true,
+    rating: 3,
+    imageDetail: [Images.productCard, Images.productCard, Images.productCard],
   },
   {
     id: 8,
@@ -88,5 +102,7 @@ export const products = [
     merchantImage: Images.merchantImage,
     tags: ["Chair", "Modern", "Minimalist"],
     isSale: false,
+    rating: 5,
+    imageDetail: [Images.productCard, Images.productCard, Images.productCard],
   },
 ];
