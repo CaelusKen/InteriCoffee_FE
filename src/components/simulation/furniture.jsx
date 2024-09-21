@@ -1,74 +1,51 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import { FBXModel } from "./models/FBXModel";
-import { Box, TransformControls } from "@react-three/drei";
 
 export const Furniture = ({
-    position,
-    rotation,
-    scale,
-    color,
-    onSelect,
-    isSelected,
-    onPositionChange,
-    onRotationChange,
-    transformMode,
-    isFBX,
-    url,
-  }) => {
-    const mesh = useRef();
-    const [hovered, setHovered] = useState(false);
-  
-    const handleChange = useCallback(
-      (event) => {
-        if (event.target.object.position && transformMode === "translate") {
-          onPositionChange(event.target.object.position);
-        }
-        if (event.target.object.rotation && transformMode === "rotate") {
-          onRotationChange(event.target.object.rotation);
-        }
-      },
-      [onPositionChange, onRotationChange, transformMode]
-    );
-  
-    const commonProps = {
-      onClick: (e) => {
-        e.stopPropagation();
-        onSelect();
-      },
-      onPointerOver: (e) => {
-        e.stopPropagation();
-        setHovered(true);
-      },
-      onPointerOut: (e) => {
-        e.stopPropagation();
-        setHovered(false);
-      },
-    };
-  
-    return (
-      <group>
-        {isFBX ? (
-          <FBXModel
-            url={url}
-            position={position}
-            rotation={rotation}
-            scale={scale}
-            {...commonProps}
-          />
-        ) : (
-          <Box
-            ref={mesh}
-            position={position}
-            rotation={rotation}
-            scale={scale}
-            {...commonProps}
-          >
-            <meshStandardMaterial color={hovered ? "#ff0000" : color} />
-          </Box>
-        )}
-        {isSelected && !isFBX && (
-          <TransformControls object={mesh} mode={transformMode} onObjectChange={handleChange} />
-        )}
-      </group>
-    );
+  position,
+  rotation,
+  width,
+  height,
+  depth,
+  color,
+  onSelect,
+  isSelected,
+  isFBX,
+  url,
+  texture,
+}) => {
+  const mesh = useRef();
+
+  useFrame(() => {
+    if (mesh.current) {
+      mesh.current.position.set(...position);
+      mesh.current.rotation.set(...rotation);
+      mesh.current.scale.set(width, height, depth);
+    }
+  });
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    onSelect();
   };
+
+  return (
+    <group ref={mesh} onClick={handleClick}>
+      {isFBX ? (
+        <FBXModel
+          url={url}
+          texture={texture}
+          position={position}
+          rotation={rotation}
+          scale={[width, height, depth]}
+        />
+      ) : (
+        <mesh>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+      )}
+    </group>
+  );
+};

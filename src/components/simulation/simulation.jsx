@@ -39,7 +39,6 @@ import {
   Move,
   RotateCcw,
 } from "lucide-react";
-import { FBXModel } from "./models/FBXModel";
 import { Room } from "./room";
 import { DragPlane } from "./drag-plane";
 import { InspectorInput } from "./inspector-input";
@@ -114,6 +113,8 @@ export default function RoomPlanner() {
   const [historyIndex, setHistoryIndex] = useState(0);
   const [transformMode, setTransformMode] = useState("translate");
 
+  const furnitureRefs = useRef(furniture.map(() => useRef()));
+
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === "Delete" && selectedFurniture !== null) {
@@ -133,6 +134,10 @@ export default function RoomPlanner() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedFurniture, historyIndex, transformMode]);
+
+  useEffect(() => {
+    furnitureRefs.current = furniture.map((_, i) => furnitureRefs.current[i] || useRef());
+  }, [furniture]);
 
   const toggleTransformMode = () => {
     setTransformMode((prevMode) =>
@@ -170,8 +175,6 @@ export default function RoomPlanner() {
           position.z,
         ],
         rotation: [0, 0, 0],
-        isFBX: selectedType.isFBX || false,
-        url: selectedType.url || "",
       };
       const newFurnitureList = [...furniture, newFurniture];
       setFurniture(newFurnitureList);
@@ -192,6 +195,10 @@ export default function RoomPlanner() {
     );
     setFurniture(updatedFurniture);
     addToHistory(updatedFurniture);
+  };
+
+  const handleTextureChange = (index, newTexture) => {
+    handleUpdateFurniture(index, { texture: newTexture });
   };
 
   const addToHistory = (newState) => {
@@ -327,6 +334,7 @@ export default function RoomPlanner() {
             <pointLight position={[10, 10, 10]} castShadow />
             <Room
               furniture={furniture}
+              furnitureRefs={furnitureRefs.current}
               onSelectFurniture={handleSelectFurniture}
               selectedFurniture={selectedFurniture}
               onUpdateFurniture={handleUpdateFurniture}
@@ -344,34 +352,53 @@ export default function RoomPlanner() {
                 <h3 className="text-lg font-semibold mb-2">
                   {furniture[selectedFurniture].name}
                 </h3>
-                <div className="mb-4">
-                  <Label htmlFor="color" className="text-sm font-medium">
-                    Color
-                  </Label>
-                  <div className="flex items-center mt-1">
+                {!furniture[selectedFurniture].isFBX && (
+                  <div className="mb-4">
+                    <Label htmlFor="color" className="text-sm font-medium">
+                      Color
+                    </Label>
+                    <div className="flex items-center mt-1">
+                      <Input
+                        id="color"
+                        type="color"
+                        value={furniture[selectedFurniture].color}
+                        onChange={(e) =>
+                          handleUpdateFurniture(selectedFurniture, {
+                            color: e.target.value,
+                          })
+                        }
+                        className="w-10 h-10 p-1 mr-2"
+                      />
+                      <Input
+                        type="text"
+                        value={furniture[selectedFurniture].color}
+                        onChange={(e) =>
+                          handleUpdateFurniture(selectedFurniture, {
+                            color: e.target.value,
+                          })
+                        }
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                )}
+                {furniture[selectedFurniture].isFBX && (
+                  <div className="mb-4">
+                    <Label htmlFor="texture" className="text-sm font-medium">
+                      Texture
+                    </Label>
                     <Input
-                      id="color"
-                      type="color"
-                      value={furniture[selectedFurniture].color}
-                      onChange={(e) =>
-                        handleUpdateFurniture(selectedFurniture, {
-                          color: e.target.value,
-                        })
-                      }
-                      className="w-10 h-10 p-1 mr-2"
-                    />
-                    <Input
+                      id="texture"
                       type="text"
-                      value={furniture[selectedFurniture].color}
+                      value={furniture[selectedFurniture].texture || ""}
                       onChange={(e) =>
-                        handleUpdateFurniture(selectedFurniture, {
-                          color: e.target.value,
-                        })
+                        handleTextureChange(selectedFurniture, e.target.value)
                       }
-                      className="flex-1"
+                      placeholder="Enter texture URL"
+                      className="mt-1"
                     />
                   </div>
-                </div>
+                )}
                 <h4 className="text-sm font-semibold mb-2">Transform</h4>
                 <InspectorInput
                   label="Position X"
@@ -498,4 +525,4 @@ export default function RoomPlanner() {
       </div>
     </div>
   );
-}         
+}
