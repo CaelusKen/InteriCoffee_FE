@@ -1,10 +1,10 @@
 "use client";
 
-import HeaderBar from "@/components/header-bar/header-bar";
+// import HeaderBar from "@/components/header-bar/header-bar";
 import "../styles/globals.css";
-import FooterBar from "@/components/footer-bar/footer-bar";
-import Slug from "@/utils/slug";
-import { useRouter } from "next/navigation";
+// import FooterBar from "@/components/footer-bar/footer-bar";
+// import Slug from "@/utils/slug";
+// import { useRouter } from "next/navigation";
 
 export default function App({ Component, pageProps }) {
   const screenName = "Home";
